@@ -172,25 +172,36 @@ List CPP_clownet(
   NumericVector mu(nrow);
   NumericVector z(nrow);
   NumericVector w(nrow);
-  NumericVector seq_lambda(n_lambda);
+  NumericVector seq_lambda(n_lambda + 1);
   NumericVector betas_atuais(ncol);
   NumericVector betas_antigos(ncol);
   NumericVector erros_lasso(ncol);
   NumericVector grad(ncol);
   NumericVector out(nrow);
-  NumericMatrix betas(n_lambda, ncol);
+  NumericMatrix betas(n_lambda + 1, ncol);
     
   if(cv == false){
     CPP_calc_lambda(lambda, X, y);
     
-    lambda_min = log((1/n_lambda)*lambda + 0.001);
+    lambda_min = log((1/n_lambda)*lambda); //talvez precisa mudar
+    
+    if(lambda_min == R_NegInf){
+      lambda_min = -7;
+    }
+      
     lambda_dist = (log(lambda) - lambda_min)/n_lambda;
     
-    seq_lambda[0] = exp(lambda_min) + 0.0001; //n deixar ir para zero
+    seq_lambda[0] = exp(lambda_min); //n deixar ir para zero
     
     for(int i = 1; i < seq_lambda.length(); i++){
       seq_lambda[i] = exp(log(seq_lambda[i-1]) + lambda_dist);
     }
+    
+    // if(ncol < nrow){
+    //   seq_lambda[0] = 0;
+    // }
+    
+    seq_lambda[n_lambda] = lambda; //ultimo
   }
   else{
     seq_lambda = lambdas;
@@ -199,7 +210,7 @@ List CPP_clownet(
   //Intercepto
   betas_atuais[0] = log(mean(y)/(1- mean(y)));
   
-  for(int j = (n_lambda - 1); j >= 0; j--){
+  for(int j = n_lambda; j >= 0; j--){
       Rcpp::checkUserInterrupt();
     
       if(trace == true){
@@ -212,7 +223,6 @@ List CPP_clownet(
       s = seq_lambda[j];
       
       while( (erro_lasso > tol) & (it_lasso < maxit)){
-        
         
         calc_eta(X, y, betas_atuais, eta, mu, z, w);
         betas_antigos = clone(betas_atuais);
