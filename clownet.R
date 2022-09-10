@@ -25,7 +25,7 @@ clownet = function(X, y, n_lambdas = 50, trace = F, maxit = 10){
   colnames(obj$betas) = colnames(X)
   
   out = list(chamado = chamado,
-             lambdas = obj$lambdas, betas = obj$betas, preditos = preditos, lp = lp,
+             lambdas = obj$lambdas, betas = obj$betas, preditos = preditos, dev.x = lp,
              centro_coef = attr_center, escala_coef = attr_scale, zeros = zeros)
   class(out) = c('list', 'clownet')
   return(out)
@@ -99,14 +99,20 @@ cv.clownet = function(X, y, n_lambdas = 50, n_blocos = 10, trace = FALSE,
 }
 
 extract.clownet = function(obj, s){
-  if(s == 0){
+  if(s == "lambda_min"){
+    ls = which.min(obj$dev.x)
+  }
+  else if(s == 0){
     ls = which.min(obj$lambda)
   }
   else if(s > max(obj$lambda) | s < min(obj$lambda)){
     stop("choose a valid value for s.")
   }
-  else{
+  else if(is.numeric(x)){
     ls = which.min(abs(s - obj$lambdas))
+  }
+  else{
+    stop("choose a valid value for s.")
   }
   
   betas = obj$betas[ls,]
@@ -143,10 +149,12 @@ plot.cv.clownet = function(obj){
   lambda_min = log(df_plot$lambda[which.min(df_plot$dev_mean)])
                 
   ggplot(df_plot, aes(x = log(lambda), y = dev_mean)) + 
-    geom_point(size = 1) +
-    geom_errorbar(aes(ymin=dev_min,ymax=dev_max), col = "royalblue") +
+    geom_point(size = 1, col = "red") +
+    geom_line(col = "red") + 
+    geom_errorbar(aes(ymin=dev_min,ymax=dev_max), col = "black") +
     geom_segment(aes(x = lambda_min, xend = lambda_min,
-                     y = min(dev_min), yend = max(dev_max)), col = "red") +
+                     y = min(dev_min), yend = max(dev_max)), col = "royalblue",
+                 linetype = "dashed") +
     #geom_line(aes(x = log(lambda), y = dev_mean), col = "black", linetype = "dashed") +
     theme_minimal() +
     theme(plot.title=element_text(hjust=0.5)) +
@@ -187,9 +195,11 @@ plot.clownet = function(obj){
   plt
 }
 
-#deviance
 deviance.clownet = function(obj) {
   return(obj$lp)
 }
 
-
+predict.clownet = function(obj, s, newdata){
+  betas = coef.clownet(obj, s)
+  return(newdata%*%betas)
+}

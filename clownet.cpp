@@ -6,24 +6,6 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 void CPP_calc_lambda(double& lambda, const NumericMatrix& m, const IntegerVector& y)
-//****************************************************************************
-//
-//  Purpose:
-//
-//    CPP_calc_lambda is a subroutine (void type) that calculates the maximum 
-//    value of lambda in which all coefficients are 0.
-//
-//  Discussion:
-//
-//  Parameters:
-//
-//    Input/Output, double& lambda, value of lambda, to be used later, in CPP_clownet.
-//
-//    Input, NumericMatrix& (double **) m, design matrix of the regression.
-//
-//    Input, IntegerVector& (int *) y, numeric vector of response, expected to
-//    be integer (0's and 1's).
-//
 {
   double nrow = m.rows();
   double ncol = m.cols();
@@ -53,24 +35,6 @@ double CPP_partial_log_likehood(
                      NumericMatrix& X, NumericVector& w,
                      NumericVector& z, NumericVector& B,
                      int j)
-//****************************************************************************
-//
-//  Purpose:
-//
-//    CPP_partial_log_likehood calculates the partial log-likelihood
-//    for one coefficient.
-//
-//  Discussion:
-//
-//    Could be used if we solved the LASSO problem by Gradient Descent.
-//
-//    Input/Output, double& lambda, value of lambda, to be used later, in CPP_clownet.
-//
-//    Input, NumericMatrix& (double **) m, design matrix of the regression.
-//
-//    Input, IntegerVector& (int *) y, numeric vector of response, expected to
-//    be integer (0's and 1's).
-//
 {
   double nrow = X.rows();
   double ncol = X.cols();
@@ -105,34 +69,6 @@ double calc_grad(const NumericMatrix& X,
                  const NumericVector& eta,
                  int j
                )
-//****************************************************************************
-//
-//  Purpose:
-//
-//    calc_grad is an internal C++ function to compute the gradient (or fist
-//    deritivate) of the log likelihood in relation to one Bj.
-//
-//  Discussion:
-//    
-//    This derivative is symbolic and it's calculation are exact.
-//
-//  Parameters:
-//
-//    Input, NumericMatrix& (double **) X, design matrix of the regression.
-//
-//    Input, NumericVector& (double) w, weights (the same as Fisher's Scoring) for
-//    the logistic regression with logit linkage.
-//    
-//    Input, NumericVector& (double) z, working response for
-//    the logistic regression with logit linkage.
-//
-//    Input, NumericVector& (double) B, current estimates for B.
-//
-//    Input, NumericVector& (double) eta, linear predictor, or XB.
-//
-//    Input, int j, the coordinate index.
-//
-//    Output, double out, gradient for the coordinate Bj.
 {
   double nrow = X.rows();
   double out = 0;
@@ -161,34 +97,6 @@ double calc_hess(NumericMatrix& X,
                  NumericVector& eta,
                  int j
 )
-//****************************************************************************
-//
-//  Purpose:
-//
-//    calc_hess is an internal C++ function to compute the hessian (or second
-//    deritivate) of the log likelihood in relation to one Bj.
-//
-//  Discussion:
-//    
-//    This derivative is symbolic and it's calculation exact.
-//
-//  Parameters:
-//
-//    Input, NumericMatrix& (double **) X, design matrix of the regression.
-//
-//    Input, NumericVector& (double) w, weights (the same as Fisher's Scoring) for
-//    the logistic regression with logit linkage.
-//    
-//    Input, NumericVector& (double) z, working response for
-//    the logistic regression with logit linkage.
-//
-//    Input, NumericVector& (double) B, current estimates for B.
-//
-//    Input, NumericVector& (double) eta, linear predictor, or XB.
-//
-//    Input, int j, the coordinate index.
-//
-//    Output, double out, hessian (just second derivative) for the coordinate Bj.
 {
   double nrow = X.rows();
   //double ncol = X.cols();
@@ -208,25 +116,7 @@ double calc_hess(NumericMatrix& X,
 
 // [[Rcpp::export]]
 double soft_threshold(double z, double s)
-//****************************************************************************
-//
-//  Purpose:
-//
-//    soft_threshold is an internal C++ function to compute the soft thresholding
-//    for the value z in respect to s.
-//
-//  Discussion:
-//    
-//
-//  Parameters:
-//
-//    Input, double z, design matrix of the regression.
-//
-//    Input, double w, weights (the same as Fisher's Scoring) for
-//    the logistic regression with logit linkage.
-//
-//    Output, double out, hessian (just second derivative) for the coordinate Bj.  
-  {
+{
   if (z > s){
     return(z - s);
   } 
@@ -241,23 +131,6 @@ double soft_threshold(double z, double s)
  
 // [[Rcpp::export]]
 double exp_approx(double x) 
-//****************************************************************************
-//
-//  Purpose:
-//
-//    exp_approx is C++ routine to calculate the exponential of X.
-//
-//  Discussion:
-//    The std::exp and std::log functions can be somewhat slow compared to their
-//    FORTRAN 77 counterparts (up to 2X slow in our systems).
-//    Some programmers rewrite those functions to be less acurate but faster, this one
-//    makes a Taylor approximation and it's around 2x faster.
-//
-//  Parameters:
-//
-//    Input, double x, the value for which compute exp(x).
-//
-//    Output, double x, exponential of x.   
 {
  x = 1.0 + x / 1024;
  x *= x; x *= x; x *= x; x *= x;
@@ -275,35 +148,6 @@ void calc_eta(const NumericMatrix& X,
               NumericVector& z,
               NumericVector& w
               )
-//****************************************************************************
-//
-//  Purpose:
-//
-//    calc_eta is an internal C++ subroutine to update the linear predictor
-//    and it's dependencies (mu,z and w).
-//
-//  Discussion:
-//    
-//    void functions are awesome.
-//
-//  Parameters:
-//
-//    Input, NumericMatrix& (double **) X, design matrix of the regression.
-//
-//    Input, IntegerVector& (int) y, response vector (0's and 1's).
-//
-//    Input, NumericVector& (double) B, current estimates for B.
-//
-//    Input, NumericVector& (double) eta, linear predictor, or XB.
-//
-//    Input, NumericVector& (double) mu, current estimated response.
-//
-//    Input, NumericVector& (double) w, weights (the same as Fisher's Scoring) for
-//    the logistic regression with logit linkage.
-//    
-//    Input, NumericVector& (double) z, working response for
-//    the logistic regression with logit linkage.
-//
 {
   int i,j,k;
   double nrow = X.rows();
@@ -348,38 +192,6 @@ List CPP_clownet(
     int n_lambda = 50, 
     bool trace = false,
     int maxit = 10)
-//****************************************************************************
-//
-//  Purpose:
-//
-//    CPP_clownet is the workhorse function, it calls all others and return the result
-//    for the R Code.
-//
-//  Discussion:
-//    
-//
-//  Parameters:
-//
-//    Input, NumericMatrix& (double **) X, design matrix of the regression.
-//
-//    Input, IntegerVector& (int) y, response vector (0's and 1's).
-//
-//    Input, NumericVector& (double) escala, could be used if we wanted to deescale the coefficients.
-//
-//    Input, NumericVector& (double) centro, could be used if we wanted to decenter the coefficients.
-//
-//    Input, NumericVector& (double) lambdas, lambda sequence provided by the user
-//
-//    Input, bool cv, if true then the lambda sequence provided is followed.
-//    
-//    Input, int n_lambda, number of lambdas for the solution.
-//
-//    Input, bool trace, if true then the lambda is printed as the computation run.
-//
-//    Input, int maxit, number of lambdas for the solution.
-//
-//    Output, List containing two elements: the matrix of the coefficients B (not sparse in
-//    storage) and the lambda sequence that generated it.
 {
   double aux;
   double lambda;
@@ -487,23 +299,6 @@ List CPP_clownet(
 }
 
 // [[Rcpp::export]]
-//****************************************************************************
-//
-//  Purpose:
-//
-//    CPP_calc_deviance calculates the deviance for each observation.
-//
-//  Discussion:
-//    
-//
-//  Parameters:
-//
-//    Input, IntegerVector& (int) y, response vector (0's and 1's).
-//
-//    Input, NumericMatrix& (double) mu, estimated vector of probabilities.
-//
-//    Output, desvio&, deviance for each observation.
-//
 void CPP_calc_deviance(IntegerVector& y,
                        NumericVector& mu,
                        NumericVector& desvio)
@@ -516,23 +311,6 @@ void CPP_calc_deviance(IntegerVector& y,
   
   
 // [[Rcpp::export]]
-//****************************************************************************
-//
-//  Purpose:
-//
-//    CPP_calc_deviance_vector calculates the deviance for each observation and sums it.
-//
-//  Discussion:
-//    
-//
-//  Parameters:
-//
-//    Input, IntegerVector& (int) y, response vector (0's and 1's).
-//
-//    Input, NumericMatrix& (double) mu, estimated vector of probabilities.
-//
-//    Output, double out, the deviance for the entire model.
-//
 NumericVector CPP_calc_deviance_vector(NumericMatrix& M,
                                        const IntegerVector& y)
 {
@@ -562,24 +340,6 @@ NumericVector CPP_calc_deviance_vector(NumericMatrix& M,
 
 // [[Rcpp::export]]
 double CPP_calc_lambda_double(const NumericMatrix& X, const IntegerVector& y)
-//****************************************************************************
-//
-//  Purpose:
-//
-//    CPP_calc_lambda_double is a function that calculates the maximum 
-//    value of lambda in which all coefficients are 0.
-//
-//  Discussion:
-//
-//  Parameters:
-//
-//    Input, NumericMatrix& (double **) m, design matrix of the regression.
-//
-//    Input, IntegerVector& (int *) y, numeric vector of response, expected to
-//    be integer (0's and 1's).
-//
-//    Output, double lambda, value of lambda, to be used later, in CPP_clownet.
-//
 {
   double nrow = X.rows();
   double ncol = X.cols();
@@ -609,28 +369,6 @@ NumericMatrix CPP_predict(const NumericMatrix& X,
                           const NumericMatrix& B,
                           const int& n_lambdas,
                           const IntegerVector& y)
-//****************************************************************************
-//
-//  Purpose:
-//
-//    CPP_calc_lambda_double is a function that calculates the maximum 
-//    value of lambda in which all coefficients are 0.
-//
-//  Discussion:
-//
-//  Parameters:
-//
-//    Input, NumericMatrix& (double **) X, design matrix of the regression.
-//
-//    Input, NumericVector& B, matrix of estimates, each column is for a lambda value.
-//
-//    Input, int& n_lambdas, number of lambdas used for B.
-//
-//    Input, IntegerVector& (int *) y, numeric vector of response, expected to
-//    be integer (0's and 1's).
-//
-//    Output, NumericVector out, predicted values for each lambda (for deviance calculation in CV).
-//
 {
   double nrow = X.rows();
   double ncol = X.cols();
