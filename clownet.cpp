@@ -223,10 +223,10 @@ List CPP_clownet(
   if(cv == false){
     CPP_calc_lambda(lambda, X, y);
     
-    lambda_min = log((1/n_lambda)*lambda);
+    lambda_min = log(1/n_lambda) + log(lambda);
     
     if(lambda_min == R_NegInf){ //C++ has lower precision than R
-      lambda_min = -10;
+      lambda_min = -7;
     }
       
     lambda_dist = (log(lambda) - lambda_min)/n_lambda;
